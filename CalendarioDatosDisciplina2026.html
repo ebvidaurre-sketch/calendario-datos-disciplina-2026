@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario Digital Enero-Junio 2026</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #ffffff;
+            --accent: #ffffff;
+            --gold: #ffd700;
+            --dark: #0a0a0a;
+            --glass: rgba(10, 10, 10, 0.85);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #000;
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Fondos por mes */
+        .month-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            opacity: 0;
+            transition: opacity 1s ease;
+            z-index: -1;
+        }
+
+        .month-bg.active {
+            opacity: 1;
+        }
+
+        .month-bg::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 50%, rgba(0,0,0,0.8) 100%);
+        }
+
+        /* Header Lock In style */
+        .header {
+            background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 100%);
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #fff, #a0a0a0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Día actual */
+        .today-box {
+            background: var(--glass);
+            border: 2px solid var(--accent);
+            border-radius: 16px;
+            padding: 25px;
+            margin: 25px auto;
+            max-width: 500px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 0 40px rgba(255,255,255,0.2);
+        }
+
+        .today-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: var(--accent);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .today-date {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* Stats */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            background: var(--glass);
+            padding: 15px 25px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent);
+            box-shadow: 0 10px 30px rgba(255,255,255,0.1);
+        }
+
+        .xp-bar-container {
+            width: 200px;
+            height: 24px;
+            background: rgba(0,0,0,0.5);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .xp-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #8338ec, #ffffff);
+            transition: width 0.6s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        /* Navegación meses */
+        .month-nav {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 25px;
+            flex-wrap: wrap;
+            background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.5) 100%);
+        }
+
+        .month-btn {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            color: #888;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            backdrop-filter: blur(10px);
+        }
+
+        .month-btn:hover, .month-btn.active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255,255,255,0.4);
+        }
+
+        /* Vista de día individual */
+        .day-view {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 200;
+            overflow-y: auto;
+            backdrop-filter: blur(20px);
+        }
+
+        .day-view.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .day-view-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 30px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+            position: relative;
+        }
+
+        .nav-arrow {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--glass);
+            border: 2px solid var(--border);
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .nav-arrow:hover {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+            transform: scale(1.1);
+        }
+
+        .day-view-content {
+            flex: 1;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            width: 100%;
+        }
+
+        .day-view-date {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .day-view-date h2 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .day-view-date .category {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--glass);
+            padding: 10px 25px;
+            border-radius: 25px;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border: 1px solid var(--border);
+        }
+
+        .flag-icon {
+            font-size: 1.5rem;
+        }
+
+        .day-view-fact {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            font-size: 1.3rem;
+            line-height: 1.8;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            border-left: 4px solid var(--accent);
+        }
+
+        .day-view-tasks {
+            background: var(--glass);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid var(--border);
+        }
+
+        .day-view-tasks h3 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--accent);
+        }
+
+        .close-day-view {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--glass);
+            border: 2px solid var(--border);
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .close-day-view:hover {
+            background: #ff006e;
+            border-color: #ff006e;
+            transform: rotate(90deg);
+        }
+
+        /* Calendario grid */
+        .calendar-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .month-section {
+            display: none;
+        }
+
+        .month-section.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .month-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            background: linear-gradient(90deg, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .day-card {
+            background: var(--glass);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .day-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .day-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+            box-shadow: 0 20px 40px rgba(255,255,255,0.1);
+        }
+
+        .day-card:hover::before {
+            opacity: 1;
+        }
+
+        .day-card.future {
+            opacity: 0.6;
+        }
+
+        .day-card.future::after {
+            content: '🔒';
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.2rem;
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .day-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .today-badge {
+            background: var(--accent);
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .day-date {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .category-tag {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid var(--border);
+        }
+
+        .fact-preview {
+            font-style: italic;
+            color: #aaa;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .click-hint {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.75rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .day-card:hover .click-hint {
+            opacity: 1;
+        }
+
+        /* Tareas */
+        .task-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid transparent;
+        }
+
+        .task-item:hover {
+            border-color: var(--accent);
+            background: rgba(255,255,255,0.05);
+        }
+
+        .task-item.completed {
+            opacity: 0.4;
+            text-decoration: line-through;
+        }
+
+        .task-checkbox {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #555;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .task-item.completed .task-checkbox {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #000;
+        }
+
+        /* XP Gain - AHORA BLANCO */
+        .xp-gain {
+            position: fixed;
+            background: linear-gradient(90deg, #ffffff, #cccccc);
+            color: #000;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-weight: 700;
+            pointer-events: none;
+            animation: floatUp 1.5s ease-out forwards;
+            z-index: 300;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 10px 30px rgba(255,255,255,0.4);
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-100px) scale(1.2); }
+        }
+
+        /* Modal rango */
+        .rank-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 400;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(20px);
+        }
+
+        .rank-modal.show {
+            display: flex;
+        }
+
+        .rank-content {
+            background: var(--glass);
+            padding: 60px;
+            border-radius: 30px;
+            text-align: center;
+            border: 2px solid var(--accent);
+            max-width: 500px;
+            box-shadow: 0 0 60px rgba(255,255,255,0.3);
+            animation: scaleIn 0.5s;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .rank-emoji {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .rank-content h2 {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .rank-content p {
+            color: #888;
+            font-size: 1.2rem;
+        }
+
+        .close-modal {
+            margin-top: 30px;
+            padding: 15px 40px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+        }
+
+        .close-modal:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(255,255,255,0.5);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.8rem; }
+            .day-view-date h2 { font-size: 2rem; }
+            .nav-arrow { width: 50px; height: 50px; }
+            .days-grid { grid-template-columns: 1fr; }
+            
+            .day-view-header {
+                padding: 20px;
+                padding-top: 80px;
+            }
+            
+            .close-day-view {
+                top: 20px;
+                right: 20px;
+            }
+            
+            .nav-arrow:first-child {
+                margin-right: auto;
+            }
+            
+            .nav-arrow:last-child {
+                margin-left: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Fondos por mes - Montañas diferentes para cada mes -->
+    <div class="month-bg active" id="bg-0" style="background-image: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920');"></div>
+    <div class="month-bg" id="bg-1" style="background-image: url('https://kimi-web-img.moonshot.cn/img/c8.alamy.com/2ac6c3727b7b1cecf505e9fdd7b1a16f7c2120b5.jpg');"></div>
+    <div class="month-bg" id="bg-2" style="background-image: url('https://kimi-web-img.moonshot.cn/img/thumbs.dreamstime.com/266677e0f871aa2d954d53bd95b0f58ea4f57484.jpg');"></div>
+    <div class="month-bg" id="bg-3" style="background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920');"></div>
+    <div class="month-bg" id="bg-4" style="background-image: url('https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920');"></div>
+    <div class="month-bg" id="bg-5" style="background-image: url('https://kimi-web-img.moonshot.cn/img/img.freepik.com/d92b3e67a703017a323d5f04b4ce985686f42f01.jpg');"></div>
+
+    <!-- Header - SIN el badge rosa Lock In Mode -->
+    <div class="header">
+        <h1>Calendario Digital 2026</h1>
+        
+        <div class="today-box">
+            <div class="today-label">Hoy es</div>
+            <div class="today-date" id="todayDateDisplay">25 de marzo de 2026</div>
+        </div>
+        
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span id="currentRank">🥉</span>
+                <span id="rankName">Bronze</span>
+            </div>
+            <div class="stat-item">
+                <span>XP:</span>
+                <div class="xp-bar-container">
+                    <div class="xp-bar" id="xpBar" style="width: 0%">
+                        <span id="xpText">0/100</span>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <span>Nivel:</span>
+                <span id="levelNum">1</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegación meses -->
+    <div class="month-nav">
+        <button class="month-btn" onclick="showMonth(0)">Enero</button>
+        <button class="month-btn" onclick="showMonth(1)">Febrero</button>
+        <button class="month-btn active" onclick="showMonth(2)">Marzo</button>
+        <button class="month-btn" onclick="showMonth(3)">Abril</button>
+        <button class="month-btn" onclick="showMonth(4)">Mayo</button>
+        <button class="month-btn" onclick="showMonth(5)">Junio</button>
+    </div>
+
+    <!-- Vista de día individual - Flecha derecha y X separadas -->
+    <div class="day-view" id="dayView">
+        <div class="day-view-header">
+            <button class="nav-arrow" onclick="navigateDay(-1)">←</button>
+            <button class="nav-arrow" onclick="navigateDay(1)" style="margin-left: auto; margin-right: 80px;">→</button>
+        </div>
+        <button class="close-day-view" onclick="closeDayView()">✕</button>
+        <div class="day-view-content" id="dayViewContent">
+            <!-- Contenido dinámico -->
+        </div>
+    </div>
+
+    <!-- Calendario -->
+    <div class="calendar-container" id="calendar"></div>
+
+    <!-- Modal rango -->
+    <div class="rank-modal" id="rankModal">
+        <div class="rank-content">
+            <div class="rank-emoji" id="rankEmoji">🎉</div>
+            <h2>¡Subiste de rango!</h2>
+            <p id="rankDesc">Ahora eres Plata</p>
+            <button class="close-modal" onclick="closeModal()">Continuar</button>
+        </div>
+    </div>
+
+    <script>
+        // FECHA DE HOY: 25 de marzo de 2026
+        const TODAY = new Date(2026, 2, 25);
+        
+        // Banderas
+        const FLAGS = {
+            ecuador: '🇪🇨',
+            europa: '🇪🇺',
+            usa: '🇺🇸'
+        };
+
+        // Fondos por mes (0=Enero, 1=Febrero, etc.) - Montañas diferentes
+        const MONTH_BACKGROUNDS = {
+            0: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920', // Enero - Montañas rocosas
+            1: 'https://kimi-web-img.moonshot.cn/img/c8.alamy.com/2ac6c3727b7b1cecf505e9fdd7b1a16f7c2120b5.jpg', // Febrero
+            2: 'https://kimi-web-img.moonshot.cn/img/thumbs.dreamstime.com/266677e0f871aa2d954d53bd95b0f58ea4f57484.jpg', // Marzo
+            3: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920', // Abril - Alpes suizos
+            4: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920', // Mayo - Montañas nevadas
+            5: 'https://kimi-web-img.moonshot.cn/img/img.freepik.com/d92b3e67a703017a323d5f04b4ce985686f42f01.jpg'  // Junio
+        };
+
+        // Datos curiosos
+        const factsData = {
+            0: [/* Enero - 31 días */],
+            1: [/* Febrero - 28 días */],
+            2: [/* Marzo - 31 días */],
+            3: [/* Abril - 30 días */],
+            4: [/* Mayo - 31 días */],
+            5: [/* Junio - 30 días */]
+        };
+
+        // [Aquí irían todos los datos curiosos que ya teníamos...]
+        // Por brevedad, copio los datos que ya teníamos:
+
+        // ENERO
+        factsData[0] = [
+            {type: 'ecuador', fact: 'Ecuador es el país con más especies de aves por metro cuadrado del mundo: ¡1,638 especies!'},
+            {type: 'ecuador', fact: 'El "Panama Hat" en realidad es fabricado en Ecuador, específicamente en Cuenca y Montecristi.'},
+            {type: 'europa', fact: 'En Noruega existe un pingüino nombrado caballero: Sir Nils Olav III es coronel jefe de la Guardia Real Noruega.'},
+            {type: 'ecuador', fact: 'Quito es la capital más alta del mundo (2,850 msnm) y fue la primera ciudad declarada Patrimonio de la Humanidad por la UNESCO en 1978.'},
+            {type: 'usa', fact: 'La bandera actual de EE.UU. fue diseñada por un estudiante de 16 años, Robert Heft, como tarea escolar. Su profesor le puso B-.'},
+            {type: 'ecuador', fact: 'Ecuador tiene 4 regiones distintas: Amazonía, Andes, Costa e Islas Galápagos.'},
+            {type: 'ecuador', fact: 'El cacao ecuatoriano es considerado el mejor del mundo. El chocolate se ha consumido aquí durante casi 5,000 años.'},
+            {type: 'ecuador', fact: 'El olinguito, descubierto en 2013 en Ecuador, fue el primer mamífero carnívoro descubierto en el hemisferio occidental en 35 años.'},
+            {type: 'europa', fact: 'En Hungría está prohibido chocar vasos al brindar. Esta tradición data de 1848.'},
+            {type: 'ecuador', fact: 'Ecuador es el mayor exportador de bananos de América y el segundo del mundo.'},
+            {type: 'usa', fact: 'La Navidad fue ilegal en Estados Unidos hasta 1907 porque se consideraba una fiesta pagana.'},
+            {type: 'ecuador', fact: 'Las Islas Galápagos fueron declaradas Patrimonio Natural de la Humanidad en 1978.'},
+            {type: 'ecuador', fact: 'El volcán Cotopaxi es el volcán activo más alto del mundo con 5,897 metros de altura.'},
+            {type: 'ecuador', fact: 'Ecuador es el país más pequeño de los Andes pero tiene la mayor densidad de volcanes activos.'},
+            {type: 'europa', fact: 'Bulgaria es el país europeo con el nombre más antiguo: lo conserva intacto desde el año 681 d.C.'},
+            {type: 'ecuador', fact: 'El "cuy" (conejillo de indias) es un plato tradicional ecuatoriano consumido durante miles de años.'},
+            {type: 'ecuador', fact: 'Ecuador tiene 13 idiomas indígenas oficiales además del español.'},
+            {type: 'ecuador', fact: 'La Basílica del Voto Nacional en Quito tiene gárgolas con animales ecuatorianos.'},
+            {type: 'usa', fact: 'El Pentágono tiene el doble de baños necesarios porque se construyó cuando existían leyes de segregación racial.'},
+            {type: 'ecuador', fact: 'Ecuador fue parte de la Gran Colombia junto a Venezuela, Colombia y Panamá desde 1819 hasta 1830.'},
+            {type: 'ecuador', fact: 'El récord Guinness del sombrero de paja toquilla más fino lo tiene Ecuador.'},
+            {type: 'ecuador', fact: 'El Parque Nacional Yasuní tiene la mayor biodiversidad de especies por hectárea del planeta.'},
+            {type: 'europa', fact: 'En Suiza es ilegal cortar el césped los domingos.'},
+            {type: 'ecuador', fact: 'La ciudad de Cuenca conserva el mejor centro colonial de Latinoamérica.'},
+            {type: 'ecuador', fact: 'Ecuador es uno de los 17 países megadiversos del mundo.'},
+            {type: 'ecuador', fact: 'El ferrocarril transandino desciende 500 metros en zig-zag en la "Nariz del Diablo".'},
+            {type: 'usa', fact: 'Alaska fue comprada a Rusia en 1867 por $7.2 millones (2 centavos por acre).'},
+            {type: 'ecuador', fact: 'La tortuga gigante de Galápagos puede vivir más de 150 años.'},
+            {type: 'ecuador', fact: 'Ecuador ha sido clasificado como el mejor lugar para jubilados extranjeros.'},
+            {type: 'ecuador', fact: 'El mercado de Otavalo es el mercado indígena más grande de Sudamérica.'},
+            {type: 'ecuador', fact: 'El Chimborazo es el punto más cercano al sol desde el centro de la Tierra.'}
+        ];
+
+        // FEBRERO (28 días)
+        factsData[1] = [
+            {type: 'ecuador', fact: 'El árbol de cinchona es la fuente original de la quinina contra la malaria.'},
+            {type: 'ecuador', fact: 'Ecuador fue el primer país en reconocer los derechos de la naturaleza en su constitución.'},
+            {type: 'europa', fact: 'El zoológico más antiguo del mundo está en Viena, Austria (Schönbrunn), fundado en 1752.'},
+            {type: 'ecuador', fact: 'La iglesia de la Compañía de Jesús en Quito está cubierta de 7 toneladas de pan de oro.'},
+            {type: 'usa', fact: 'Wyoming fue el primer estado en darle el voto a las mujeres en 1869.'},
+            {type: 'ecuador', fact: 'El festival de la Mama Negra mezcla tradiciones indígenas, africanas y españolas.'},
+            {type: 'ecuador', fact: 'Ecuador produce el 70% del cacao fino de aroma del mundo.'},
+            {type: 'ecuador', fact: 'La laguna Quilotoa es un cráter volcánico con agua color esmeralda.'},
+            {type: 'ecuador', fact: 'El puñal ceremonial de Atahualpa se conserva en el Museo del Banco Central.'},
+            {type: 'europa', fact: 'En Italia está prohibido dar de comer a las palomas en Venecia.'},
+            {type: 'ecuador', fact: 'Las ballenas jorobadas llegan a las costas ecuatorianas de junio a septiembre.'},
+            {type: 'ecuador', fact: 'El pan de yuca es un invento ecuatoriano hecho con almidón de yuca.'},
+            {type: 'usa', fact: 'La Campana de la Libertad tiene una falta de ortografía: "Pensylvania".'},
+            {type: 'ecuador', fact: 'El Parque Nacional Cotopaxi tiene el bosque de pinos más alto del mundo.'},
+            {type: 'ecuador', fact: 'La ciudad de Loja fue la primera en usar electricidad en Ecuador (1890).'},
+            {type: 'ecuador', fact: 'Ecuador tiene playas de arena negra, blanca, dorada y verde.'},
+            {type: 'europa', fact: 'San Marino es el estado independiente más antiguo de Europa (301 d.C.).'},
+            {type: 'ecuador', fact: 'El árbol de ceibo es el árbol nacional de Ecuador.'},
+            {type: 'ecuador', fact: 'La Ruta del Sol conecta sitios arqueológicos de 5,000 años de antigüedad.'},
+            {type: 'ecuador', fact: 'El alerce ecuatoriano puede vivir más de 3,000 años.'},
+            {type: 'usa', fact: 'Estados Unidos no tiene idioma oficial a nivel federal.'},
+            {type: 'ecuador', fact: 'El Sanjuanito es el baile folclórico más popular de Ecuador.'},
+            {type: 'ecuador', fact: 'Ecuador es el tercer exportador mundial de rosas.'},
+            {type: 'ecuador', fact: 'El pescador artesanal puede capturar más de 300 especies diferentes al año.'},
+            {type: 'ecuador', fact: 'La Ruta de los Volcanes incluye más de 70 volcanes activos.'},
+            {type: 'ecuador', fact: 'El shamanismo amazónico usa el ayahuasca hace más de 5,000 años.'},
+            {type: 'ecuador', fact: 'El Carnaval en Ecuador dura una semana completa con agua y espuma.'},
+            {type: 'europa', fact: 'El Museo Británico solo exhibe el 1% de sus 8 millones de objetos.'}
+        ];
+
+        // MARZO (31 días) - Aquí está el día 25 (hoy)
+        factsData[2] = [
+            {type: 'ecuador', fact: 'El colibrí es el ave nacional de Ecuador con 132 especies (40% del mundo).'},
+            {type: 'ecuador', fact: 'La Gruta de la Paz en Guayaquil contiene los restos del General Sucre.'},
+            {type: 'usa', fact: 'El primer bar de EE.UU. se abrió en 1668 en Tappan, Nueva York.'},
+            {type: 'ecuador', fact: 'Ecuador tiene el índice más alto de endemismo de reptiles del mundo.'},
+            {type: 'europa', fact: 'La Torre de Pisa empezó a inclinarse durante su construcción en el siglo XII.'},
+            {type: 'ecuador', fact: 'El "Humo de los Incas" es una técnica ancestral de curación.'},
+            {type: 'ecuador', fact: 'Esmeraldas tiene la comunidad afroecuatoriana más grande.'},
+            {type: 'ecuador', fact: 'El queso de hoja es único de Ecuador, envuelto en hojas de achiote.'},
+            {type: 'ecuador', fact: 'La Universidad de San Francisco de Quito fue la primera universidad privada del país.'},
+            {type: 'europa', fact: 'En Francia está prohibido besar en las plataformas de tren desde 1910.'},
+            {type: 'ecuador', fact: 'El árbol de tagua (marfil vegetal) es nativo de Ecuador.'},
+            {type: 'ecuador', fact: 'El Canal de Jambelí conecta Guayaquil con el océano Pacífico.'},
+            {type: 'usa', fact: 'Estados Unidos ha tenido 9 capitales diferentes antes de Washington D.C.'},
+            {type: 'ecuador', fact: 'El Inti Raymi se celebra en junio en comunidades indígenas.'},
+            {type: 'ecuador', fact: 'Ecuador es el único país donde puedes estar en ambos hemisferios simultáneamente.'},
+            {type: 'ecuador', fact: 'La Ruta de la Escencia recorre plantaciones de cacao y café.'},
+            {type: 'ecuador', fact: 'El balón de fútbol más antiguo de Sudamérica está en Guayaquil (1899).'},
+            {type: 'europa', fact: 'Mónaco tiene la expectativa de vida más alta del mundo: 89.4 años.'},
+            {type: 'ecuador', fact: 'Las ruinas de Ingapirca son el complejo arqueológico inca más importante de Ecuador.'},
+            {type: 'ecuador', fact: 'El encebollado es el plato típico nacional de Ecuador.'},
+            {type: 'ecuador', fact: 'Ecuador tiene más de 300 tipos de orquídeas, siendo la flor nacional.'},
+            {type: 'usa', fact: 'El sistema GPS es propiedad del gobierno de EE.UU.'},
+            {type: 'ecuador', fact: 'La Cueva de los Tayos es famosa por su misteriosa arquitectura metálica.'},
+            {type: 'ecuador', fact: 'La Diablada de Píllaro dura 6 días con bailarines vestidos de diablos.'},
+            {type: 'ecuador', fact: 'Ecuador fue el primer país sudamericano en abolir la esclavitud (1851).'}, // DÍA 25 - HOY
+            {type: 'ecuador', fact: 'El árbol de sangre de dragón produce una savia roja medicinal.'}, // DÍA 26
+            {type: 'europa', fact: 'La República Checa tiene 932 castillos, más que cualquier otro país europeo.'}, // DÍA 27
+            {type: 'ecuador', fact: 'El cóndor andino es el ave voladora más grande del mundo.'}, // DÍA 28
+            {type: 'ecuador', fact: 'La provincia de Napo tiene más especies de plantas que toda Europa.'}, // DÍA 29
+            {type: 'ecuador', fact: 'El chocolate "Arriba" es el único con denominación de origen geográfica.'}, // DÍA 30
+            {type: 'ecuador', fact: 'El reloj astronómico de Quito es uno de los más precisos de Sudamérica.'} // DÍA 31
+        ];
+
+        // ABRIL (30 días)
+        factsData[3] = [
+            {type: 'ecuador', fact: 'El "minga" es una tradición andina de trabajo comunitario.'},
+            {type: 'ecuador', fact: 'Ecuador tiene 48 volcanes, siendo el Chimborazo y Cotopaxi los más altos.'},
+            {type: 'usa', fact: 'La primera mujer en ganar oro olímpico por EE.UU. murió sin saber que compitió.'},
+            {type: 'ecuador', fact: 'La reserva Antisana es hábitat del oso de anteojos, único oso de Sudamérica.'},
+            {type: 'europa', fact: 'El Bosque Negro en Alemania es famoso por sus relojes de cuco.'},
+            {type: 'ecuador', fact: 'El churrasco ecuatoriano se sirve con arroz, huevo, papas y plátano.'},
+            {type: 'ecuador', fact: 'Baños de Agua Santa es conocida como "la puerta de la Amazonía".'},
+            {type: 'ecuador', fact: 'El sombrero de paja toquilla puede tardar 6 meses en tejerse.'},
+            {type: 'ecuador', fact: 'Ecuador tiene 5 sitios Patrimonio de la Humanidad.'},
+            {type: 'europa', fact: 'En Bélgica existe un museo dedicado exclusivamente a las papas fritas.'},
+            {type: 'ecuador', fact: 'El pasillo es el género musical nacional de Ecuador.'},
+            {type: 'ecuador', fact: 'La isla Floreana tiene el "buzón de los piratas" desde el siglo XVIII.'},
+            {type: 'usa', fact: 'EE.UU. y la URSS planeaban una misión conjunta a la Luna antes de Kennedy.'},
+            {type: 'ecuador', fact: 'El árbol de caucho fue introducido en Asia desde la Amazonía ecuatoriana.'},
+            {type: 'ecuador', fact: 'El mercado de Sangolquí es famoso por su "hornado" (cerdo asado).'},
+            {type: 'ecuador', fact: 'Ecuador tiene 24 provincias, cada una con su bandera y escudo.'},
+            {type: 'ecuador', fact: 'La Ruta del Cacao recorre haciendas históricas.'},
+            {type: 'europa', fact: 'El Eurotúnel conecta Francia e Inglaterra con 50.5 km de longitud.'},
+            {type: 'ecuador', fact: 'El guayusa es un té amazónico con más antioxidantes que el té verde.'},
+            {type: 'ecuador', fact: 'La iglesia de San Francisco es el complejo colonial más grande de Sudamérica.'},
+            {type: 'ecuador', fact: 'El tigrillo puede rotar sus tobillos 180 grados para bajar árboles.'},
+            {type: 'usa', fact: 'Pensacola es la "Ciudad de las Cinco Banderas".'},
+            {type: 'ecuador', fact: 'El Corpus Christi en Pujilí combina danzas indígenas y católicas.'},
+            {type: 'ecuador', fact: 'Ecuador tiene la reserva marina más grande de la costa pacífica sudamericana.'},
+            {type: 'ecuador', fact: 'El zamarrito es un sombrero tradicional de la sierra ecuatoriana.'},
+            {type: 'ecuador', fact: 'La Universidad Central del Ecuador fue fundada en 1826.'},
+            {type: 'europa', fact: 'El Vaticano es el país más pequeño del mundo (0.44 km²).'},
+            {type: 'ecuador', fact: 'El páramo almacena más agua que todos los glaciares de los Alpes.'},
+            {type: 'ecuador', fact: 'El montubio es la cultura costeña de los valles fértiles.'},
+            {type: 'ecuador', fact: 'Ecuador fue el primer país en legalizar la eutanasia en 2024.'}
+        ];
+
+        // MAYO (31 días)
+        factsData[4] = [
+            {type: 'ecuador', fact: 'El arroz con menestra es el almuerzo más típico de Ecuador.'},
+            {type: 'ecuador', fact: 'La Nariz del Diablo es una formación rocosa en Alausí.'},
+            {type: 'europa', fact: 'Las auroras boreales son visibles en Noruega, Suecia, Islandia y Finlandia.'},
+            {type: 'ecuador', fact: 'Ecuador tiene más de 4,000 especies de orquídeas.'},
+            {type: 'usa', fact: 'El matrimonio interracial fue ilegal en EE.UU. hasta 1967.'},
+            {type: 'ecuador', fact: 'El yagé es patrimonio cultural de los pueblos amazónicos.'},
+            {type: 'ecuador', fact: 'Portoviejo es la "Ciudad de los Reales Tamarindos".'},
+            {type: 'ecuador', fact: 'El carnaval de Guaranda es famoso por su "pájaro azul".'},
+            {type: 'ecuador', fact: 'El volcán Tungurahua estuvo en erupción de 1999 a 2016.'},
+            {type: 'europa', fact: 'La Sagrada Familia lleva en construcción desde 1882.'},
+            {type: 'ecuador', fact: 'El humedal de La Segua es el único humedal costero de Ecuador.'},
+            {type: 'ecuador', fact: 'Ecuador tiene 10 parques nacionales que protegen el 20% del territorio.'},
+            {type: 'usa', fact: 'Detroit es la ciudad más peligrosa y Honolulu la más segura de EE.UU.'},
+            {type: 'ecuador', fact: 'El tostado (maíz tostado) es el snack más popular de Ecuador.'},
+            {type: 'ecuador', fact: 'La Ruta del Sol conecta 300 km de playas vírgenes.'},
+            {type: 'ecuador', fact: 'El cascarón es una tradición de huevos con confeti.'},
+            {type: 'ecuador', fact: 'El árbol de ceibo florece en febrero pintando todo de rojo.'},
+            {type: 'europa', fact: 'El río Danubio pasa por 10 países europeos diferentes.'},
+            {type: 'ecuador', fact: 'Ecuador ganó 5 medallas en los Juegos Olímpicos de París 2024.'},
+            {type: 'ecuador', fact: 'El choclo (maíz tierno) es base de la gastronomía ecuatoriana.'},
+            {type: 'ecuador', fact: 'La Casa del Árbol tiene el columpio "Al Fin del Mundo".'},
+            {type: 'usa', fact: 'La deuda nacional de EE.UU. supera los 34 billones de dólares.'},
+            {type: 'ecuador', fact: 'El cuy asado se sirve con papas, salsa de maní y ají.'},
+            {type: 'ecuador', fact: 'Ecuador tiene 3 zonas horarias diferentes.'},
+            {type: 'ecuador', fact: 'El pasillo fue declarado Patrimonio Cultural Inmaterial en 2021.'},
+            {type: 'ecuador', fact: 'La Feria de Loja es la feria cultural más antigua de Ecuador (1820).'},
+            {type: 'europa', fact: 'Stonehenge tiene más de 5,000 años de antigüedad.'},
+            {type: 'ecuador', fact: 'El guanta es el roedor más grande de Ecuador (hasta 15 kg).'},
+            {type: 'ecuador', fact: 'Ecuador tiene 1,600 km de frontera con Colombia y 1,400 km con Perú.'},
+            {type: 'ecuador', fact: 'El hielero del Chimborazo está desapareciendo por el cambio climático.'},
+            {type: 'ecuador', fact: 'La comida de la sierra incluye cuy, hornado y llapingachos.'}
+        ];
+
+        // JUNIO (30 días)
+        factsData[5] = [
+            {type: 'ecuador', fact: 'El Inti Raymi se celebra el solsticio de junio en los Andes.'},
+            {type: 'ecuador', fact: 'En Ecuador puedes esquiar en el Cotopaxi por la mañana y estar en la playa por la tarde.'},
+            {type: 'europa', fact: 'El Louvre es el museo de arte más grande del mundo con 380,000 obras.'},
+            {type: 'ecuador', fact: 'El San Juanito es el baile folclórico más alegre de Ecuador.'},
+            {type: 'usa', fact: 'Alaska tiene más costa que todos los demás estados de EE.UU. juntos.'},
+            {type: 'ecuador', fact: 'La Laguna de Cuicocha es un lago de cráter con dos islas sagradas.'},
+            {type: 'ecuador', fact: 'El piquero de patas azules es el ave emblemática de Galápagos.'},
+            {type: 'ecuador', fact: 'Ecuador produce café de especialidad entre 1,000 y 1,800 metros de altura.'},
+            {type: 'ecuador', fact: 'El cóndor andino puede volar 5 horas sin aletear.'},
+            {type: 'europa', fact: 'La UE tiene 24 idiomas oficiales pero solo 3 de trabajo.'},
+            {type: 'ecuador', fact: 'El yambo es una bebida fermentada tradicional de la sierra.'},
+            {type: 'ecuador', fact: 'La Ruta de los Exploradores sigue los pasos de Alexander von Humboldt.'},
+            {type: 'usa', fact: 'Hawái es el único estado de EE.UU. fuera del continente americano.'},
+            {type: 'ecuador', fact: 'El tamarindo se consume en jugos, dulces y salsas.'},
+            {type: 'ecuador', fact: 'Ecuador tiene 5 ecorregiones: manglar, bosque seco, húmedo, páramo y nublado.'},
+            {type: 'ecuador', fact: 'El cóndor es el "Rey de los Andes" y aparece en el escudo nacional.'},
+            {type: 'ecuador', fact: 'La Mama Negra representa a la Virgen de la Merced en Latacunga.'},
+            {type: 'europa', fact: 'El Monte Blanc es el pico más alto de Europa Occidental (4,808 m).'},
+            {type: 'ecuador', fact: 'El arroz con coco es típico de la costa ecuatoriana.'},
+            {type: 'ecuador', fact: 'Ecuador tiene el 10% de todas las especies de plantas del mundo.'},
+            {type: 'ecuador', fact: 'El tucán andino habita bosques nublados entre 1,500 y 3,000 metros.'},
+            {type: 'usa', fact: 'El Gran Cañón tiene 446 km de largo y 1,800 metros de profundidad.'},
+            {type: 'ecuador', fact: 'La Diablada de Píllaro es una de las fiestas más importantes de Ecuador.'},
+            {type: 'ecuador', fact: 'La guanábana es una fruta amazónica con propiedades medicinales.'},
+            {type: 'ecuador', fact: 'Ecuador fue sede de la Cumbre de las Américas en 2018.'},
+            {type: 'ecuador', fact: 'El colibrí espátula tiene el pico más largo proporcional a su cuerpo.'},
+            {type: 'europa', fact: 'Eurovision se celebra desde 1956 y es el programa de TV más antiguo.'},
+            {type: 'ecuador', fact: 'El chontacuro es un gusano comestible alto en proteínas.'},
+            {type: 'ecuador', fact: 'La Catedral de Cuenca es la más grande de Ecuador.'},
+            {type: 'ecuador', fact: 'Ecuador celebra su independencia el 10 de agosto de 1809.'}
+        ];
+
+        // Tareas de disciplina
+        const disciplineTasks = [
+            "Leer 30 minutos un libro educativo",
+            "Hacer 20 minutos de ejercicio físico",
+            "Meditar o practicar mindfulness 10 min",
+            "Escribir 3 cosas por las que estás agradecido",
+            "Aprender algo nuevo sobre un tema desconocido",
+            "Beber 2 litros de agua durante el día",
+            "Dormir 7-8 horas (acostarse temprano)",
+            "Practicar un hobby creativo 30 min",
+            "Ayudar a alguien sin esperar nada a cambio",
+            "Planificar las metas del día siguiente",
+            "Desconectar redes sociales 2 horas",
+            "Practicar gratitud con un familiar/amigo",
+            "Organizar tu espacio de trabajo/habitación",
+            "Estudiar o practicar un idioma 20 min",
+            "Caminar al aire libre 30 minutos",
+            "Evitar quejas durante todo el día",
+            "Hacer una lista de prioridades y cumplirlas",
+            "Practicar respiración profunda 5 min",
+            "Comer una comida saludable sin distracciones",
+            "Reflexionar sobre tus logros del día"
+        ];
+
+        // Sistema de rangos
+        const ranks = [
+            {name: "Bronze", emoji: "🥉", minXP: 0},
+            {name: "Plata", emoji: "🥈", minXP: 500},
+            {name: "Oro", emoji: "🥇", minXP: 1000},
+            {name: "Diamante", emoji: "💎", minXP: 2000},
+            {name: "Embajador", emoji: "👑", minXP: 3500},
+            {name: "Leyenda", emoji: "🏆", minXP: 5000}
+        ];
+
+        // Estado del juego
+        let gameState = {
+            xp: 0,
+            level: 1,
+            completedTasks: new Set(),
+            currentRank: 0
+        };
+
+        let currentViewDate = null; // Para navegación en vista individual
+
+        // Cargar estado guardado
+        function loadGameState() {
+            const saved = localStorage.getItem('calendarGameState');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                gameState.xp = parsed.xp || 0;
+                gameState.level = parsed.level || 1;
+                gameState.completedTasks = new Set(parsed.completedTasks || []);
+                gameState.currentRank = parsed.currentRank || 0;
+            }
+            updateStats();
+        }
+
+        // Guardar estado
+        function saveGameState() {
+            localStorage.setItem('calendarGameState', JSON.stringify({
+                xp: gameState.xp,
+                level: gameState.level,
+                completedTasks: Array.from(gameState.completedTasks),
+                currentRank: gameState.currentRank
+            }));
+        }
+
+        // Actualizar estadísticas
+        function updateStats() {
+            document.getElementById('xpText').textContent = `${gameState.xp}/${gameState.level * 100}`;
+            document.getElementById('xpBar').style.width = `${(gameState.xp % 100)}%`;
+            document.getElementById('levelNum').textContent = gameState.level;
+            
+            const rank = ranks[gameState.currentRank];
+            document.getElementById('currentRank').textContent = rank.emoji;
+            document.getElementById('rankName').textContent = rank.name;
+        }
+
+        // Verificar subida de rango
+        function checkRankUp() {
+            const nextRank = ranks[gameState.currentRank + 1];
+            if (nextRank && gameState.xp >= nextRank.minXP) {
+                gameState.currentRank++;
+                showRankUpModal(ranks[gameState.currentRank]);
+                saveGameState();
+                updateStats();
+            }
+        }
+
+        // Mostrar modal de subida de rango
+        function showRankUpModal(rank) {
+            document.getElementById('rankEmoji').textContent = rank.emoji;
+            document.getElementById('rankDesc').textContent = `Ahora eres ${rank.name}`;
+            document.getElementById('rankModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('rankModal').classList.remove('show');
+        }
+
+        // Comparar fechas
+        function isSameDate(date1, date2) {
+            return date1.getFullYear() === date2.getFullYear() &&
+                   date1.getMonth() === date2.getMonth() &&
+                   date1.getDate() === date2.getDate();
+        }
+
+        // Verificar si es futuro
+        function isFutureDate(date) {
+            const d1 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const d2 = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate());
+            return d1 > d2;
+        }
+
+        // Generar tareas
+        function getDailyTasks(dayId) {
+            const tasks = [];
+            const shuffled = [...disciplineTasks].sort(() => 0.5 - Math.random());
+            for (let i = 0; i < 4; i++) {
+                tasks.push({
+                    id: `${dayId}-${i}`,
+                    text: shuffled[i]
+                });
+            }
+            return tasks;
+        }
+
+        // Completar tarea
+        function completeTask(taskId, element) {
+            if (gameState.completedTasks.has(taskId)) {
+                gameState.completedTasks.delete(taskId);
+                gameState.xp = Math.max(0, gameState.xp - 25);
+                element.classList.remove('completed');
+            } else {
+                gameState.completedTasks.add(taskId);
+                gameState.xp += 25;
+                
+                if (gameState.xp >= gameState.level * 100) {
+                    gameState.level++;
+                    showXPGain(element, '¡Subiste de rango! 🎉');
+                } else {
+                    showXPGain(element, '+25 XP');
+                }
+                
+                element.classList.add('completed');
+                checkRankUp();
+            }
+            saveGameState();
+            updateStats();
+        }
+
+        // Mostrar XP flotante
+        function showXPGain(element, text) {
+            const rect = element.getBoundingClientRect();
+            const xpGain = document.createElement('div');
+            xpGain.className = 'xp-gain';
+            xpGain.textContent = text;
+            xpGain.style.left = `${rect.left + rect.width/2}px`;
+            xpGain.style.top = `${rect.top}px`;
+            document.body.appendChild(xpGain);
+            setTimeout(() => xpGain.remove(), 1500);
+        }
+
+        // ABRIR VISTA DE DÍA INDIVIDUAL
+        function openDayView(monthIndex, dayIndex) {
+            const dayData = factsData[monthIndex][dayIndex];
+            const currentDate = new Date(2026, monthIndex, dayIndex + 1);
+            currentViewDate = { month: monthIndex, day: dayIndex };
+            
+            const isToday = isSameDate(currentDate, TODAY);
+            const isFuture = isFutureDate(currentDate);
+            const dayId = `2026-${monthIndex}-${dayIndex}`;
+            
+            const dateStr = currentDate.toLocaleDateString('es-ES', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            const flag = FLAGS[dayData.type];
+            const categoryName = dayData.type === 'ecuador' ? 'Ecuador' : 
+                                dayData.type === 'europa' ? 'Europa' : 'USA';
+            
+            let tasksHTML = '';
+            if (!isFuture) {
+                const tasks = getDailyTasks(dayId);
+                tasksHTML = `
+                    <div class="day-view-tasks">
+                        <h3>Misiones del Día</h3>
+                        ${tasks.map(task => `
+                            <div class="task-item ${gameState.completedTasks.has(task.id) ? 'completed' : ''}" 
+                                 onclick="completeTask('${task.id}', this)">
+                                <div class="task-checkbox">
+                                    ${gameState.completedTasks.has(task.id) ? '✓' : ''}
+                                </div>
+                                <span>${task.text}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                tasksHTML = `
+                    <div class="day-view-tasks" style="text-align: center; padding: 40px;">
+                        <div style="font-size: 3rem; margin-bottom: 20px;">🔒</div>
+                        <h3>Misiones Bloqueadas</h3>
+                        <p style="color: #888; margin-top: 15px;">Las misiones se desbloquearán el ${dateStr}</p>
+                    </div>
+                `;
+            }
+            
+            const todayLabel = isToday ? '<div style="color: #ffffff; font-size: 1rem; margin-top: 10px;">⭐ HOY ⭐</div>' : '';
+            
+            document.getElementById('dayViewContent').innerHTML = `
+                <div class="day-view-date">
+                    <h2>${dateStr}</h2>
+                    ${todayLabel}
+                    <div class="category" style="margin-top: 20px;">
+                        <span class="flag-icon">${flag}</span>
+                        ${categoryName}
+                    </div>
+                </div>
+                <div class="day-view-fact">
+                    ${dayData.fact}
+                </div>
+                ${tasksHTML}
+            `;
+            
+            document.getElementById('dayView').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // CERRAR VISTA DE DÍA
+        function closeDayView() {
+            document.getElementById('dayView').classList.remove('active');
+            document.body.style.overflow = '';
+            currentViewDate = null;
+        }
+
+        // NAVEGAR ENTRE DÍAS (flechas)
+        function navigateDay(direction) {
+            if (!currentViewDate) return;
+            
+            let { month, day } = currentViewDate;
+            let newMonth = month;
+            let newDay = day + direction;
+            
+            // Verificar límites del mes
+            const daysInMonth = factsData[month].length;
+            
+            if (newDay < 0) {
+                // Ir al mes anterior
+                newMonth = month - 1;
+                if (newMonth < 0) {
+                    closeDayView();
+                    return;
+                }
+                newDay = factsData[newMonth].length - 1;
+            } else if (newDay >= daysInMonth) {
+                // Ir al mes siguiente
+                newMonth = month + 1;
+                if (newMonth > 5) {
+                    closeDayView();
+                    return;
+                }
+                newDay = 0;
+            }
+            
+            openDayView(newMonth, newDay);
+        }
+
+        // Crear tarjeta de día (vista de calendario)
+        function createDayCard(day, monthIndex, dayIndex) {
+            const card = document.createElement('div');
+            const currentDate = new Date(2026, monthIndex, dayIndex + 1);
+            const isToday = isSameDate(currentDate, TODAY);
+            const isFuture = isFutureDate(currentDate);
+            
+            card.className = `day-card ${day.type} ${isFuture ? 'future' : ''}`;
+            card.onclick = () => openDayView(monthIndex, dayIndex);
+            
+            const flag = FLAGS[day.type];
+            const dateStr = currentDate.toLocaleDateString('es-ES', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric'
+            });
+            
+            const todayBadge = isToday ? '<span class="today-badge">Hoy</span>' : '';
+            
+            card.innerHTML = `
+                <div class="day-header">
+                    <div>
+                        <div class="day-number">${dayIndex + 1} ${todayBadge}</div>
+                        <div class="day-date">${dateStr}</div>
+                    </div>
+                    <span class="category-tag">
+                        <span class="flag-icon">${flag}</span>
+                    </span>
+                </div>
+                <div class="fact-preview">
+                    ${day.fact}
+                </div>
+                <div class="click-hint">Click para ver más</div>
+            `;
+            
+            return card;
+        }
+
+        // Cambiar fondo según mes
+        function changeBackground(monthIndex) {
+            document.querySelectorAll('.month-bg').forEach((bg, idx) => {
+                bg.classList.toggle('active', idx === monthIndex);
+            });
+        }
+
+        // Mostrar mes
+        function showMonth(monthIndex) {
+            changeBackground(monthIndex);
+            
+            document.querySelectorAll('.month-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx === monthIndex);
+            });
+            
+            document.querySelectorAll('.month-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            document.getElementById(`month-${monthIndex}`).classList.add('active');
+        }
+
+        // Inicializar calendario
+        function initCalendar() {
+            const container = document.getElementById('calendar');
+            const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio'];
+            
+            monthNames.forEach((monthName, monthIndex) => {
+                const monthSection = document.createElement('div');
+                monthSection.id = `month-${monthIndex}`;
+                monthSection.className = 'month-section';
+                
+                if (monthIndex === TODAY.getMonth()) {
+                    monthSection.classList.add('active');
+                    changeBackground(monthIndex);
+                }
+                
+                monthSection.innerHTML = `<h2 class="month-title">${monthName} 2026</h2>`;
+                
+                const daysGrid = document.createElement('div');
+                daysGrid.className = 'days-grid';
+                
+                factsData[monthIndex].forEach((day, dayIndex) => {
+                    daysGrid.appendChild(createDayCard(day, monthIndex, dayIndex));
+                });
+                
+                monthSection.appendChild(daysGrid);
+                container.appendChild(monthSection);
+            });
+        }
+
+        // Iniciar
+        window.onload = function() {
+            loadGameState();
+            initCalendar();
+        };
+
+        // Cerrar con tecla ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeDayView();
+            if (e.key === 'ArrowLeft' && currentViewDate) navigateDay(-1);
+            if (e.key === 'ArrowRight' && currentViewDate) navigateDay(1);
+        });
+    </script>
+</body>
+</html>
