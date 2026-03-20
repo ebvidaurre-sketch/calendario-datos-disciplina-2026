@@ -1,0 +1,13 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "Calendario Datos-Disciplina 2026",
+  "orientation": "portrait",
+  "scope": "/",
+  "short_name": "Calendario 2026",
+  "start_url": "/",
+  "theme_color": "#ffffff",
+  "lang": "es",
+  "description": "Desde Enero hasta Junio de 2026, por cada día que pase, podrás ver un dato curioso sobre Ecuador, Estados Unidos o Europa junto con 4 misiones que incentivan la disciplina cada día!"
+}
